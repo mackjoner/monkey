@@ -3,14 +3,14 @@
 package monkey
 
 import (
-	"syscall"
+	"golang.org/x/sys/unix"
 )
 
 func mprotectCrossPage(addr uintptr, length int, prot int) {
-	pageSize := syscall.Getpagesize()
-	for p := pageStart(addr); p < addr + uintptr(length); p += uintptr(pageSize) {
+	pageSize := unix.Getpagesize()
+	for p := pageStart(addr); p < addr+uintptr(length); p += uintptr(pageSize) {
 		page := rawMemoryAccess(p, pageSize)
-		err := syscall.Mprotect(page, prot)
+		err := unix.Mprotect(page, prot)
 		if err != nil {
 			panic(err)
 		}
@@ -23,7 +23,7 @@ func mprotectCrossPage(addr uintptr, length int, prot int) {
 func copyToLocation(location uintptr, data []byte) {
 	f := rawMemoryAccess(location, len(data))
 
-	mprotectCrossPage(location, len(data), syscall.PROT_READ|syscall.PROT_WRITE|syscall.PROT_EXEC)
+	mprotectCrossPage(location, len(data), unix.PROT_READ|unix.PROT_WRITE|unix.PROT_EXEC)
 	copy(f, data[:])
-	mprotectCrossPage(location, len(data), syscall.PROT_READ|syscall.PROT_EXEC)
+	mprotectCrossPage(location, len(data), unix.PROT_READ|unix.PROT_EXEC)
 }
